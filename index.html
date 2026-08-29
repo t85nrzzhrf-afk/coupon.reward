@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RewardX - Watch & Earn</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <nav>
+        <div class="logo">Reward<span>X</span></div>
+
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#rewards">Rewards</a>
+            <a href="#advertise">Advertise</a>
+        </div>
+
+        <div class="coin-box">
+            🪙 <span id="navCoins">0</span>
+        </div>
+    </nav>
+
+
+    <section class="hero" id="home">
+
+        <div class="hero-text">
+
+            <p class="small-title">WATCH • EARN • REDEEM</p>
+
+            <h1>
+                Watch Ads.<br>
+                <span>Earn Rewards.</span>
+            </h1>
+
+            <p>
+                Watch sponsored content and earn coins.
+                Redeem your coins for exciting rewards.
+            </p>
+
+            <button onclick="startAd()" class="primary-btn">
+                ▶ Watch Advertisement
+            </button>
+
+        </div>
+
+        <div class="hero-card">
+
+            <div class="card-icon">🪙</div>
+
+            <h3>Your Coins</h3>
+
+            <div class="big-coins" id="heroCoins">0</div>
+
+            <p>Keep watching to earn more!</p>
+
+        </div>
+
+    </section>
+
+
+    <section class="stats">
+
+        <div class="stat">
+            <h2 id="adsWatched">0</h2>
+            <p>Ads Watched</p>
+        </div>
+
+        <div class="stat">
+            <h2 id="totalEarned">0</h2>
+            <p>Coins Earned</p>
+        </div>
+
+        <div class="stat">
+            <h2>12K+</h2>
+            <p>Active Users</p>
+        </div>
+
+        <div class="stat">
+            <h2>50+</h2>
+            <p>Rewards</p>
+        </div>
+
+    </section>
+
+
+    <section class="how">
+
+        <h2>How It Works</h2>
+
+        <div class="steps">
+
+            <div class="step">
+                <div>1</div>
+                <h3>Watch</h3>
+                <p>Watch a sponsored advertisement.</p>
+            </div>
+
+            <div class="step">
+                <div>2</div>
+                <h3>Earn</h3>
+                <p>Complete the advertisement and earn coins.</p>
+            </div>
+
+            <div class="step">
+                <div>3</div>
+                <h3>Redeem</h3>
+                <p>Use your coins to unlock rewards.</p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="rewards" id="rewards">
+
+        <h2>Available Rewards</h2>
+
+        <p class="section-subtitle">
+            Redeem your coins for exciting offers.
+        </p>
+
+        <div class="reward-container">
+
+            <div class="reward-card">
+
+                <div class="reward-logo">🍔</div>
+
+                <h3>Food Discount</h3>
+
+                <p>₹100 OFF on your next order</p>
+
+                <button onclick="redeemReward(100)">
+                    🪙 100 Coins
+                </button>
+
+            </div>
+
+
+            <div class="reward-card">
+
+                <div class="reward-logo">🍕</div>
+
+                <h3>Pizza Offer</h3>
+
+                <p>Special food delivery discount</p>
+
+                <button onclick="redeemReward(200)">
+                    🪙 200 Coins
+                </button>
+
+            </div>
+
+
+            <div class="reward-card">
+
+                <div class="reward-logo">🎟️</div>
+
+                <h3>Premium Coupon</h3>
+
+                <p>Exclusive partner discount</p>
+
+                <button onclick="redeemReward(500)">
+                    🪙 500 Coins
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="advertise" id="advertise">
+
+        <div>
+
+            <p class="small-title">FOR BUSINESSES</p>
+
+            <h2>Advertise With RewardX</h2>
+
+            <p>
+                Reach an engaged audience through sponsored
+                advertisements and measurable campaigns.
+            </p>
+
+            <button class="primary-btn" onclick="contactAdvertiser()">
+                Become an Advertiser
+            </button>
+
+        </div>
+
+        <div class="business-card">
+
+            <h3>Why Advertise?</h3>
+
+            <p>✓ Engaged audience</p>
+            <p>✓ Measurable campaigns</p>
+            <p>✓ Performance tracking</p>
+            <p>✓ Flexible advertising</p>
+
+        </div>
+
+    </section>
+
+
+    <footer>
+
+        <h3>RewardX</h3>
+
+        <p>
+            A university project demonstrating a
+            reward-based advertising platform.
+        </p>
+
+        <p>© 2026 RewardX</p>
+
+    </footer>
+
+
+    <!-- Advertisement Popup -->
+
+    <div id="adModal" class="modal">
+
+        <div class="ad-box">
+
+            <button class="close" onclick="closeAd()">×</button>
+
+            <p class="ad-label">SPONSORED ADVERTISEMENT</p>
+
+            <div class="fake-ad">
+
+                <div class="ad-logo">🚀</div>
+
+                <h2>Discover Something New</h2>
+
+                <p>
+                    This is a demo sponsored advertisement.
+                </p>
+
+                <div class="timer">
+                    <span id="timer">10</span> seconds
+                </div>
+
+            </div>
+
+            <p id="adStatus">
+                Please watch the advertisement.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
