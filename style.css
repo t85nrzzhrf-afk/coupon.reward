@@ -550,3 +550,118 @@ footer p {
         width: 100%;
     }
 }
+.hidden {
+    display: none !important;
+}
+
+#loggedOutNav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logged-nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.nav-btn,
+.signup-btn,
+.logout-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.nav-btn {
+    border: 1px solid #ddd;
+    background: white;
+}
+
+.signup-btn {
+    border: none;
+    background: #6c4df6;
+    color: white;
+}
+
+.logout-btn {
+    border: none;
+    background: #eee;
+}
+
+.login-required {
+    font-size: 14px !important;
+    color: #777 !important;
+    margin-top: 12px;
+}
+
+.auth-box {
+    width: 420px;
+    background: white;
+    border-radius: 20px;
+    padding: 35px;
+    position: relative;
+}
+
+.auth-box h2 {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.form-subtitle {
+    color: #777;
+    margin-bottom: 25px;
+}
+
+.auth-box input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 15px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    font-size: 15px;
+}
+
+.full {
+    width: 100%;
+}
+
+.error {
+    color: #d33;
+    font-size: 14px;
+    margin-top: 12px;
+}
+
+.switch {
+    text-align: center;
+    margin-top: 20px;
+    color: #777;
+}
+
+.switch span {
+    color: #6c4df6;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+@media (max-width: 600px) {
+
+    .auth-box {
+        width: 90%;
+        padding: 25px;
+    }
+
+    #loggedOutNav {
+        gap: 5px;
+    }
+
+    .nav-btn,
+    .signup-btn {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+}
