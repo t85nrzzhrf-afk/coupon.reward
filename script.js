@@ -434,31 +434,21 @@ window.closeAd = function () {
 window.redeemReward = async function (requiredCoins) {
 
     if (!currentUser) {
-
         openAuth("login");
-
         return;
     }
-
 
     const userRef =
         doc(db, "users", currentUser.uid);
 
-
     const snapshot =
         await getDoc(userRef);
 
-
     if (!snapshot.exists()) return;
 
+    const data = snapshot.data();
 
-    const data =
-        snapshot.data();
-
-
-    const coins =
-        data.coins || 0;
-
+    const coins = data.coins || 0;
 
     if (coins < requiredCoins) {
 
@@ -469,21 +459,29 @@ window.redeemReward = async function (requiredCoins) {
         return;
     }
 
-
     await updateDoc(userRef, {
-
         coins: coins - requiredCoins
-
     });
-
 
     await loadUserData();
 
+    // Generate demo coupon
+    const couponCode =
+        "RX" +
+        requiredCoins +
+        "-DEMO";
 
-    alert(
-        "🎉 Reward successfully unlocked!"
-    );
+    document.getElementById("couponTitle")
+        .innerText =
+        `₹${requiredCoins} OFF`;
 
+    document.getElementById("couponCode")
+        .innerText =
+        couponCode;
+
+    document.getElementById("couponModal")
+        .style.display =
+        "flex";
 };
 
 
@@ -579,3 +577,22 @@ function getFriendlyError(code) {
     }
 
 }
+window.closeCoupon = function () {
+
+    document.getElementById("couponModal")
+        .style.display = "none";
+
+};
+
+
+window.copyCoupon = function () {
+
+    const code =
+        document.getElementById("couponCode")
+        .innerText;
+
+    navigator.clipboard.writeText(code);
+
+    alert("Coupon code copied!");
+
+};

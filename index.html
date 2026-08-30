@@ -9,7 +9,55 @@
 
     <link rel="stylesheet" href="style.css">
 </head>
+<!-- COUPON POPUP -->
 
+<div id="couponModal" class="modal">
+
+    <div class="coupon-box">
+
+        <button class="close" onclick="closeCoupon()">×</button>
+
+        <div class="success-icon">🎉</div>
+
+        <p class="demo-label">DEMO COUPON</p>
+
+        <h2>Congratulations!</h2>
+
+        <p class="coupon-message">
+            You successfully redeemed your RewardX points.
+        </p>
+
+        <div class="coupon-card">
+
+            <div class="coupon-brand">
+                🍔 RewardX Food
+            </div>
+
+            <h3 id="couponTitle">
+                ₹100 OFF
+            </h3>
+
+            <p>
+                Demo partner discount
+            </p>
+
+            <div class="coupon-code">
+                <span id="couponCode">RX100-DEMO</span>
+
+                <button onclick="copyCoupon()">
+                    Copy
+                </button>
+            </div>
+
+        </div>
+
+        <p class="demo-warning">
+            ⚠️ Prototype only — this is not a real coupon.
+        </p>
+
+    </div>
+
+</div>
 <body>
 
     <!-- NAVBAR -->
