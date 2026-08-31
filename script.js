@@ -29,15 +29,17 @@ from
 // ========================================
 
 const firebaseConfig = {
-    
+
     apiKey: "AIzaSyBpOPt_eV8Etu6hHfFS3mCGJBq6odru3rg",
     authDomain: "rewardx2026.firebaseapp.com",
     projectId: "rewardx2026",
     storageBucket: "rewardx2026.firebasestorage.app",
     messagingSenderId: "930055573089",
     appId: "1:930055573089:web:8c5abfabf7729c60b16420"
+
 };
-    
+
+
 // ========================================
 // INITIALIZE FIREBASE
 // ========================================
@@ -118,7 +120,6 @@ window.signupUser = async function () {
     const password =
         document.getElementById("signupPassword").value;
 
-
     const error =
         document.getElementById("signupError");
 
@@ -164,9 +165,17 @@ window.signupUser = async function () {
             {
                 name: name,
                 email: email,
+
                 coins: 0,
                 adsWatched: 0,
                 totalEarned: 0,
+
+                // DEFAULT SUBSCRIPTION
+                subscription: "Free",
+                subscriptionPrice: 0,
+                multiplier: 1,
+                subscriptionActive: false,
+
                 createdAt: new Date()
             }
         );
@@ -321,6 +330,7 @@ window.startAd = function () {
 
     let timeLeft = 10;
 
+
     document.getElementById("timer")
         .innerText = timeLeft;
 
@@ -338,6 +348,7 @@ window.startAd = function () {
 
             timeLeft--;
 
+
             document.getElementById("timer")
                 .innerText = timeLeft;
 
@@ -345,15 +356,6 @@ window.startAd = function () {
             if (timeLeft <= 0) {
 
                 clearInterval(timerInterval);
-
-
-                /*
-                 * DEMO REWARD
-                 *
-                 * Production version should
-                 * validate ad completion on
-                 * a trusted backend.
-                 */
 
                 await giveDemoReward();
 
@@ -365,7 +367,7 @@ window.startAd = function () {
 
 
 // ========================================
-// DEMO REWARD
+// DEMO REWARD WITH MULTIPLIER
 // ========================================
 
 async function giveDemoReward() {
@@ -379,13 +381,39 @@ async function giveDemoReward() {
 
     try {
 
+        const snapshot =
+            await getDoc(userRef);
+
+
+        if (!snapshot.exists()) return;
+
+
+        const data =
+            snapshot.data();
+
+
+        // Get user's multiplier
+        // Free users = 1x
+        const multiplier =
+            Number(data.multiplier) || 1;
+
+
+        // Normal ad reward
+        const baseReward = 10;
+
+
+        // Apply subscription multiplier
+        const reward =
+            baseReward * multiplier;
+
+
         await updateDoc(userRef, {
 
-            coins: increment(10),
+            coins: increment(reward),
 
             adsWatched: increment(1),
 
-            totalEarned: increment(10)
+            totalEarned: increment(reward)
 
         });
 
@@ -395,7 +423,7 @@ async function giveDemoReward() {
 
         document.getElementById("adStatus")
             .innerText =
-            "✓ Advertisement completed! +10 coins";
+            `✓ Advertisement completed! +${reward} coins`;
 
 
     }
@@ -434,21 +462,31 @@ window.closeAd = function () {
 window.redeemReward = async function (requiredCoins) {
 
     if (!currentUser) {
+
         openAuth("login");
+
         return;
     }
+
 
     const userRef =
         doc(db, "users", currentUser.uid);
 
+
     const snapshot =
         await getDoc(userRef);
 
+
     if (!snapshot.exists()) return;
 
-    const data = snapshot.data();
 
-    const coins = data.coins || 0;
+    const data =
+        snapshot.data();
+
+
+    const coins =
+        Number(data.coins) || 0;
+
 
     if (coins < requiredCoins) {
 
@@ -459,11 +497,16 @@ window.redeemReward = async function (requiredCoins) {
         return;
     }
 
+
     await updateDoc(userRef, {
+
         coins: coins - requiredCoins
+
     });
 
+
     await loadUserData();
+
 
     // Generate demo coupon
     const couponCode =
@@ -471,17 +514,21 @@ window.redeemReward = async function (requiredCoins) {
         requiredCoins +
         "-DEMO";
 
+
     document.getElementById("couponTitle")
         .innerText =
         `₹${requiredCoins} OFF`;
+
 
     document.getElementById("couponCode")
         .innerText =
         couponCode;
 
+
     document.getElementById("couponModal")
         .style.display =
         "flex";
+
 };
 
 
@@ -552,6 +599,111 @@ window.contactAdvertiser = function () {
 
 
 // ========================================
+// COUPON UI
+// ========================================
+
+window.closeCoupon = function () {
+
+    document.getElementById("couponModal")
+        .style.display = "none";
+
+};
+
+
+window.copyCoupon = function () {
+
+    const code =
+        document.getElementById("couponCode")
+        .innerText;
+
+
+    navigator.clipboard.writeText(code);
+
+
+    alert("Coupon code copied!");
+
+};
+
+
+// ========================================
+// SUBSCRIPTIONS
+// ========================================
+// PROTOTYPE ONLY
+// No real payment is taken here.
+
+window.buySubscription = async function (
+    plan,
+    price,
+    multiplier
+) {
+
+    if (!currentUser) {
+
+        openAuth("login");
+
+        return;
+    }
+
+
+    const userRef =
+        doc(db, "users", currentUser.uid);
+
+
+    try {
+
+        const confirmed =
+            confirm(
+                `${plan} Plan\n\n` +
+                `Price: ₹${price}\n` +
+                `Coin Multiplier: ${multiplier}×\n\n` +
+                `Activate this prototype subscription?`
+            );
+
+
+        if (!confirmed) return;
+
+
+        await updateDoc(userRef, {
+
+            subscription: plan,
+
+            subscriptionPrice: price,
+
+            multiplier: multiplier,
+
+            subscriptionActive: true
+
+        });
+
+
+        await loadUserData();
+
+
+        alert(
+            `✓ ${plan} subscription activated!\n\n` +
+            `Multiplier: ${multiplier}×\n\n` +
+            `Prototype mode — no real payment taken.`
+        );
+
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        alert(
+            "Could not activate subscription.\n" +
+            "Please check Firebase permissions."
+        );
+
+    }
+
+};
+
+
+// ========================================
 // FRIENDLY ERRORS
 // ========================================
 
@@ -577,44 +729,3 @@ function getFriendlyError(code) {
     }
 
 }
-window.closeCoupon = function () {
-
-    document.getElementById("couponModal")
-        .style.display = "none";
-
-};
-
-
-window.copyCoupon = function () {
-
-    const code =
-        document.getElementById("couponCode")
-        .innerText;
-
-    navigator.clipboard.writeText(code);
-
-    alert("Coupon code copied!");
-
-};
-window.buySubscription = function (plan, price, multiplier) {
-
-    if (!currentUser) {
-        openAuth("login");
-        return;
-    }
-
-    const confirmed = confirm(
-        `${plan} Plan\n\n` +
-        `Price: ₹${price}\n` +
-        `Coin Multiplier: ${multiplier}×\n\n` +
-        `This is a prototype checkout.`
-    );
-
-    if (!confirmed) return;
-
-    alert(
-        `Prototype payment successful!\n\n` +
-        `${plan} Plan activated.\n` +
-        `Coin multiplier: ${multiplier}×`
-    );
-};
