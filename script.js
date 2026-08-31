@@ -596,3 +596,25 @@ window.copyCoupon = function () {
     alert("Coupon code copied!");
 
 };
+window.buySubscription = function (plan, price, multiplier) {
+
+    if (!currentUser) {
+        openAuth("login");
+        return;
+    }
+
+    const confirmed = confirm(
+        `${plan} Plan\n\n` +
+        `Price: ₹${price}\n` +
+        `Coin Multiplier: ${multiplier}×\n\n` +
+        `This is a prototype checkout.`
+    );
+
+    if (!confirmed) return;
+
+    alert(
+        `Prototype payment successful!\n\n` +
+        `${plan} Plan activated.\n` +
+        `Coin multiplier: ${multiplier}×`
+    );
+};
