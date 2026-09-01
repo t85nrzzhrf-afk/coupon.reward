@@ -729,3 +729,163 @@ function getFriendlyError(code) {
     }
 
 }
+// ========================================
+// DAILY SPIN WHEEL
+// ========================================
+
+window.spinWheel = async function () {
+
+    if (!currentUser) {
+
+        openAuth("login");
+
+        return;
+
+    }
+
+
+    const userRef =
+        doc(db, "users", currentUser.uid);
+
+
+    try {
+
+        const snapshot =
+            await getDoc(userRef);
+
+
+        if (!snapshot.exists()) return;
+
+
+        const data =
+            snapshot.data();
+
+
+        // Get today's date
+        const today =
+            new Date()
+            .toISOString()
+            .split("T")[0];
+
+
+        // Check if user already spun today
+        if (
+            data.lastSpinDate === today
+        ) {
+
+            document
+                .getElementById("spinStatus")
+                .innerText =
+                "You already used your daily spin! Come back tomorrow 🎡";
+
+            return;
+
+        }
+
+
+        const button =
+            document
+                .getElementById("spinButton");
+
+
+        button.disabled = true;
+
+
+        document
+            .getElementById("spinStatus")
+            .innerText =
+            "Spinning... 🎡";
+
+
+        // Possible rewards
+        const rewards =
+            [5, 10, 20, 50];
+
+
+        // Random reward
+        const reward =
+            rewards[
+                Math.floor(
+                    Math.random() *
+                    rewards.length
+                )
+            ];
+
+
+        // Random rotation
+        const rotation =
+            1800 +
+            Math.floor(
+                Math.random() * 1440
+            );
+
+
+        const wheel =
+            document
+                .getElementById("spinWheel");
+
+
+        wheel.style.transform =
+            `rotate(${rotation}deg)`;
+
+
+        // Wait for animation
+        setTimeout(
+            async function () {
+
+
+                await updateDoc(
+                    userRef,
+                    {
+
+                        coins:
+                            increment(reward),
+
+                        totalEarned:
+                            increment(reward),
+
+                        lastSpinDate:
+                            today
+
+                    }
+                );
+
+
+                await loadUserData();
+
+
+                document
+                    .getElementById("spinStatus")
+                    .innerText =
+                    `🎉 Congratulations! You won ${reward} coins!`;
+
+
+                button.disabled = false;
+
+
+            },
+            5000
+        );
+
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        document
+            .getElementById("spinStatus")
+            .innerText =
+            "Something went wrong. Please try again.";
+
+
+        document
+            .getElementById("spinButton")
+            .disabled =
+            false;
+
+    }
+
+};
