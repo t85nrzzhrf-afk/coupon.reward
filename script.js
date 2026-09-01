@@ -52,12 +52,14 @@ const db = getFirestore(app);
 
 
 // ========================================
-// CURRENT USER
+// GLOBAL VARIABLES
 // ========================================
 
 let currentUser = null;
 
-let timerInterval;
+let timerInterval = null;
+
+let spinTimeout = null;
 
 
 // ========================================
@@ -72,15 +74,18 @@ onAuthStateChanged(auth, async (user) => {
 
         document
             .getElementById("loggedOutNav")
-            .classList.add("hidden");
+            ?.classList.add("hidden");
 
         document
             .getElementById("loggedInNav")
-            .classList.remove("hidden");
+            ?.classList.remove("hidden");
 
-        document
-            .getElementById("loginRequired")
-            .style.display = "none";
+        const loginRequired =
+            document.getElementById("loginRequired");
+
+        if (loginRequired) {
+            loginRequired.style.display = "none";
+        }
 
         await loadUserData();
 
@@ -88,17 +93,29 @@ onAuthStateChanged(auth, async (user) => {
 
         document
             .getElementById("loggedOutNav")
-            .classList.remove("hidden");
+            ?.classList.remove("hidden");
 
         document
             .getElementById("loggedInNav")
-            .classList.add("hidden");
+            ?.classList.add("hidden");
 
-        document
-            .getElementById("loginRequired")
-            .style.display = "block";
+        const loginRequired =
+            document.getElementById("loginRequired");
+
+        if (loginRequired) {
+            loginRequired.style.display = "block";
+        }
 
         updateUI(0, 0);
+
+        updateChallengeUI({
+            dailyAds: 0,
+            dailySpin: 0,
+            dailyRedeem: 0,
+            challengeRewardClaimed: false
+        });
+
+        updateStreakUI(0);
 
     }
 
@@ -130,7 +147,6 @@ window.signupUser = async function () {
             "Please fill all fields.";
 
         return;
-
     }
 
 
@@ -140,7 +156,6 @@ window.signupUser = async function () {
             "Password must contain at least 6 characters.";
 
         return;
-
     }
 
 
@@ -178,16 +193,20 @@ window.signupUser = async function () {
                 multiplier: 1,
                 subscriptionActive: false,
 
-                // DAILY CHALLENGE
+                // DAILY CHALLENGES
                 challengeDate: getToday(),
+
                 dailyAds: 0,
+
                 dailySpin: 0,
+
                 dailyRedeem: 0,
 
                 challengeRewardClaimed: false,
 
-                // STREAK
+                // DAILY STREAK
                 lastLoginDate: "",
+
                 streak: 0,
 
                 // SPIN
@@ -208,6 +227,8 @@ window.signupUser = async function () {
     }
 
     catch (err) {
+
+        console.error(err);
 
         error.innerText =
             getFriendlyError(err.code);
@@ -239,7 +260,6 @@ window.loginUser = async function () {
             "Please enter email and password.";
 
         return;
-
     }
 
 
@@ -257,6 +277,8 @@ window.loginUser = async function () {
 
     catch (err) {
 
+        console.error(err);
+
         error.innerText =
             getFriendlyError(err.code);
 
@@ -271,7 +293,17 @@ window.loginUser = async function () {
 
 window.logout = async function () {
 
-    await signOut(auth);
+    try {
+
+        await signOut(auth);
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+    }
 
 };
 
@@ -300,23 +332,23 @@ async function loadUserData() {
         snapshot.data();
 
 
-    // Reset daily challenge
+    // RESET DAILY CHALLENGES
     data =
         await resetDailyDataIfNeeded(data);
 
 
-    // Update streak
+    // UPDATE STREAK
     await updateDailyStreak(data);
 
 
-    // Reload fresh data
+    // LOAD FRESH DATA
     await loadUserDataAfterStreak();
 
 }
 
 
 // ========================================
-// LOAD AFTER STREAK
+// LOAD DATA AFTER STREAK
 // ========================================
 
 async function loadUserDataAfterStreak() {
@@ -340,8 +372,9 @@ async function loadUserDataAfterStreak() {
 
 
     updateUI(
-        data.coins || 0,
-        data.adsWatched || 0
+        Number(data.coins) || 0,
+        Number(data.adsWatched) || 0,
+        Number(data.totalEarned) || 0
     );
 
 
@@ -349,7 +382,7 @@ async function loadUserDataAfterStreak() {
 
 
     updateStreakUI(
-        data.streak || 0
+        Number(data.streak) || 0
     );
 
 }
@@ -359,7 +392,7 @@ async function loadUserDataAfterStreak() {
 // UPDATE MAIN UI
 // ========================================
 
-function updateUI(coins, ads) {
+function updateUI(coins, ads, totalEarned = coins) {
 
     const navCoins =
         document.getElementById("navCoins");
@@ -370,24 +403,40 @@ function updateUI(coins, ads) {
     const adsWatched =
         document.getElementById("adsWatched");
 
-    const totalEarned =
+    const totalEarnedElement =
         document.getElementById("totalEarned");
 
 
-    if (navCoins)
-        navCoins.innerText = coins;
+    if (navCoins) {
+
+        navCoins.innerText =
+            coins;
+
+    }
 
 
-    if (heroCoins)
-        heroCoins.innerText = coins;
+    if (heroCoins) {
+
+        heroCoins.innerText =
+            coins;
+
+    }
 
 
-    if (adsWatched)
-        adsWatched.innerText = ads;
+    if (adsWatched) {
+
+        adsWatched.innerText =
+            ads;
+
+    }
 
 
-    if (totalEarned)
-        totalEarned.innerText = coins;
+    if (totalEarnedElement) {
+
+        totalEarnedElement.innerText =
+            totalEarned;
+
+    }
 
 }
 
@@ -411,21 +460,36 @@ window.startAd = function () {
         document.getElementById("adModal");
 
 
+    if (!modal) return;
+
+
     modal.style.display = "flex";
 
 
     let timeLeft = 10;
 
 
-    document
-        .getElementById("timer")
-        .innerText = timeLeft;
+    const timer =
+        document.getElementById("timer");
+
+    const status =
+        document.getElementById("adStatus");
 
 
-    document
-        .getElementById("adStatus")
-        .innerText =
-        "Advertisement is playing...";
+    if (timer) {
+
+        timer.innerText =
+            timeLeft;
+
+    }
+
+
+    if (status) {
+
+        status.innerText =
+            "Advertisement is playing...";
+
+    }
 
 
     clearInterval(timerInterval);
@@ -437,10 +501,12 @@ window.startAd = function () {
             timeLeft--;
 
 
-            document
-                .getElementById("timer")
-                .innerText =
-                timeLeft;
+            if (timer) {
+
+                timer.innerText =
+                    timeLeft;
+
+            }
 
 
             if (timeLeft <= 0) {
@@ -457,7 +523,7 @@ window.startAd = function () {
 
 
 // ========================================
-// AD REWARD
+// GIVE AD REWARD
 // ========================================
 
 async function giveDemoReward() {
@@ -516,11 +582,16 @@ async function giveDemoReward() {
         await loadUserData();
 
 
-        document
-            .getElementById("adStatus")
-            .innerText =
-            `✓ Advertisement completed! +${reward} coins`;
+        const status =
+            document.getElementById("adStatus");
 
+
+        if (status) {
+
+            status.innerText =
+                `✓ Advertisement completed! +${reward} coins`;
+
+        }
 
     }
 
@@ -529,10 +600,16 @@ async function giveDemoReward() {
         console.error(error);
 
 
-        document
-            .getElementById("adStatus")
-            .innerText =
-            "Something went wrong.";
+        const status =
+            document.getElementById("adStatus");
+
+
+        if (status) {
+
+            status.innerText =
+                "Something went wrong.";
+
+        }
 
     }
 
@@ -545,9 +622,16 @@ async function giveDemoReward() {
 
 window.closeAd = function () {
 
-    document
-        .getElementById("adModal")
-        .style.display = "none";
+    const modal =
+        document.getElementById("adModal");
+
+
+    if (modal) {
+
+        modal.style.display =
+            "none";
+
+    }
 
 
     clearInterval(timerInterval);
@@ -556,7 +640,7 @@ window.closeAd = function () {
 
 
 // ========================================
-// REDEEM
+// REDEEM REWARD
 // ========================================
 
 window.redeemReward = async function (requiredCoins) {
@@ -574,71 +658,103 @@ window.redeemReward = async function (requiredCoins) {
         doc(db, "users", currentUser.uid);
 
 
-    const snapshot =
-        await getDoc(userRef);
+    try {
+
+        const snapshot =
+            await getDoc(userRef);
 
 
-    if (!snapshot.exists()) return;
+        if (!snapshot.exists()) return;
 
 
-    const data =
-        snapshot.data();
+        const data =
+            snapshot.data();
 
 
-    const coins =
-        Number(data.coins) || 0;
+        const coins =
+            Number(data.coins) || 0;
 
 
-    if (coins < requiredCoins) {
+        if (coins < requiredCoins) {
 
-        alert(
-            `You need ${requiredCoins - coins} more coins.`
+            alert(
+                `You need ${requiredCoins - coins} more coins.`
+            );
+
+            return;
+
+        }
+
+
+        await updateDoc(
+            userRef,
+            {
+
+                coins:
+                    increment(-requiredCoins),
+
+                dailyRedeem:
+                    increment(1)
+
+            }
         );
 
-        return;
+
+        await loadUserData();
+
+
+        const couponCode =
+            "RX" +
+            requiredCoins +
+            "-DEMO";
+
+
+        const couponTitle =
+            document.getElementById("couponTitle");
+
+
+        const couponCodeElement =
+            document.getElementById("couponCode");
+
+
+        const couponModal =
+            document.getElementById("couponModal");
+
+
+        if (couponTitle) {
+
+            couponTitle.innerText =
+                `₹${requiredCoins} OFF`;
+
+        }
+
+
+        if (couponCodeElement) {
+
+            couponCodeElement.innerText =
+                couponCode;
+
+        }
+
+
+        if (couponModal) {
+
+            couponModal.style.display =
+                "flex";
+
+        }
 
     }
 
+    catch (error) {
 
-    await updateDoc(
-        userRef,
-        {
+        console.error(error);
 
-            coins:
-                increment(-requiredCoins),
+        alert(
+            "Could not redeem reward."
+        );
 
-            dailyRedeem:
-                increment(1)
-
-        }
-    );
-
-
-    await loadUserData();
-
-
-    const couponCode =
-        "RX" +
-        requiredCoins +
-        "-DEMO";
-
-
-    document
-        .getElementById("couponTitle")
-        .innerText =
-        `₹${requiredCoins} OFF`;
-
-
-    document
-        .getElementById("couponCode")
-        .innerText =
-        couponCode;
-
-
-    document
-        .getElementById("couponModal")
-        .style.display =
-        "flex";
+    }
 
 };
 
@@ -649,17 +765,25 @@ window.redeemReward = async function (requiredCoins) {
 
 window.openAuth = function (type) {
 
-    document
-        .getElementById("authModal")
-        .style.display =
-        "flex";
+    const modal =
+        document.getElementById("authModal");
+
+
+    if (modal) {
+
+        modal.style.display =
+            "flex";
+
+    }
 
 
     if (type === "signup") {
 
         showSignup();
 
-    } else {
+    }
+
+    else {
 
         showLogin();
 
@@ -670,10 +794,16 @@ window.openAuth = function (type) {
 
 window.closeAuth = function () {
 
-    document
-        .getElementById("authModal")
-        .style.display =
-        "none";
+    const modal =
+        document.getElementById("authModal");
+
+
+    if (modal) {
+
+        modal.style.display =
+            "none";
+
+    }
 
 };
 
@@ -682,14 +812,12 @@ window.showSignup = function () {
 
     document
         .getElementById("loginForm")
-        .classList
-        .add("hidden");
+        ?.classList.add("hidden");
 
 
     document
         .getElementById("signupForm")
-        .classList
-        .remove("hidden");
+        ?.classList.remove("hidden");
 
 };
 
@@ -698,14 +826,12 @@ window.showLogin = function () {
 
     document
         .getElementById("signupForm")
-        .classList
-        .add("hidden");
+        ?.classList.add("hidden");
 
 
     document
         .getElementById("loginForm")
-        .classList
-        .remove("hidden");
+        ?.classList.remove("hidden");
 
 };
 
@@ -724,34 +850,54 @@ window.contactAdvertiser = function () {
 
 
 // ========================================
-// COUPON
+// COUPON UI
 // ========================================
 
 window.closeCoupon = function () {
 
-    document
-        .getElementById("couponModal")
-        .style.display =
-        "none";
+    const modal =
+        document.getElementById("couponModal");
+
+
+    if (modal) {
+
+        modal.style.display =
+            "none";
+
+    }
 
 };
 
 
 window.copyCoupon = function () {
 
+    const element =
+        document.getElementById("couponCode");
+
+
+    if (!element) return;
+
+
     const code =
-        document
-            .getElementById("couponCode")
-            .innerText;
+        element.innerText;
 
 
     navigator.clipboard
-        .writeText(code);
+        .writeText(code)
+        .then(() => {
 
+            alert(
+                "Coupon code copied!"
+            );
 
-    alert(
-        "Coupon code copied!"
-    );
+        })
+        .catch(() => {
+
+            alert(
+                "Could not copy coupon code."
+            );
+
+        });
 
 };
 
@@ -818,7 +964,8 @@ window.buySubscription = async function (
 
         alert(
             `✓ ${plan} subscription activated!\n\n` +
-            `Multiplier: ${multiplier}×`
+            `Multiplier: ${multiplier}×\n\n` +
+            `Prototype mode — no real payment taken.`
         );
 
     }
@@ -873,6 +1020,7 @@ window.spinWheel = async function () {
             getToday();
 
 
+        // ALREADY SPUN
         if (data.lastSpinDate === today) {
 
             document
@@ -886,11 +1034,18 @@ window.spinWheel = async function () {
 
 
         const button =
-            document
-                .getElementById("spinButton");
+            document.getElementById("spinButton");
 
 
-        button.disabled = true;
+        const wheel =
+            document.getElementById("spinWheel");
+
+
+        if (!button || !wheel) return;
+
+
+        button.disabled =
+            true;
 
 
         document
@@ -919,52 +1074,67 @@ window.spinWheel = async function () {
             );
 
 
-        const wheel =
-            document
-                .getElementById("spinWheel");
-
-
         wheel.style.transform =
             `rotate(${rotation}deg)`;
 
 
-        setTimeout(
-            async () => {
+        clearTimeout(spinTimeout);
 
-                await updateDoc(
-                    userRef,
-                    {
 
-                        coins:
-                            increment(reward),
+        spinTimeout =
+            setTimeout(
+                async () => {
 
-                        totalEarned:
-                            increment(reward),
+                    try {
 
-                        lastSpinDate:
-                            today,
+                        await updateDoc(
+                            userRef,
+                            {
 
-                        dailySpin:
-                            1
+                                coins:
+                                    increment(reward),
+
+                                totalEarned:
+                                    increment(reward),
+
+                                lastSpinDate:
+                                    today,
+
+                                dailySpin:
+                                    1
+
+                            }
+                        );
+
+
+                        await loadUserData();
+
+
+                        document
+                            .getElementById("spinStatus")
+                            .innerText =
+                            `🎉 You won ${reward} coins!`;
 
                     }
-                );
+
+                    catch (error) {
+
+                        console.error(error);
+
+                        document
+                            .getElementById("spinStatus")
+                            .innerText =
+                            "Could not save your reward.";
+
+                    }
 
 
-                await loadUserData();
+                    button.disabled =
+                        false;
 
-
-                document
-                    .getElementById("spinStatus")
-                    .innerText =
-                    `🎉 You won ${reward} coins!`;
-
-
-                button.disabled = false;
-
-            },
-            5000
-        );
+                },
+                5000
+            );
 
     }
 
@@ -979,10 +1149,16 @@ window.spinWheel = async function () {
             "Something went wrong.";
 
 
-        document
-            .getElementById("spinButton")
-            .disabled =
-            false;
+        const button =
+            document.getElementById("spinButton");
+
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+        }
 
     }
 
@@ -990,7 +1166,7 @@ window.spinWheel = async function () {
 
 
 // ========================================
-// DATE
+// GET TODAY
 // ========================================
 
 function getToday() {
@@ -1093,6 +1269,8 @@ function updateChallengeUI(data) {
         );
 
 
+    // PROGRESS TEXT
+
     const adProgress =
         document.getElementById(
             "adChallengeProgress"
@@ -1111,20 +1289,31 @@ function updateChallengeUI(data) {
         );
 
 
-    if (adProgress)
+    if (adProgress) {
+
         adProgress.innerText =
             `${ads} / 3`;
 
+    }
 
-    if (spinProgress)
+
+    if (spinProgress) {
+
         spinProgress.innerText =
             `${spin} / 1`;
 
+    }
 
-    if (redeemProgress)
+
+    if (redeemProgress) {
+
         redeemProgress.innerText =
             `${redeem} / 1`;
 
+    }
+
+
+    // PROGRESS BARS
 
     const adBar =
         document.getElementById(
@@ -1144,22 +1333,32 @@ function updateChallengeUI(data) {
         );
 
 
-    if (adBar)
+    if (adBar) {
+
         adBar.style.width =
             `${(ads / 3) * 100}%`;
 
+    }
 
-    if (spinBar)
+
+    if (spinBar) {
+
         spinBar.style.width =
             `${spin * 100}%`;
 
+    }
 
-    if (redeemBar)
+
+    if (redeemBar) {
+
         redeemBar.style.width =
             `${redeem * 100}%`;
 
+    }
 
-    // Update CLAIM button
+
+    // CLAIM BUTTON
+
     const claimButton =
         document.getElementById(
             "claimChallengeButton"
@@ -1175,7 +1374,7 @@ function updateChallengeUI(data) {
         redeem >= 1;
 
 
-    if (data.challengeRewardClaimed) {
+    if (data.challengeRewardClaimed === true) {
 
         claimButton.innerText =
             "✓ Reward Claimed";
@@ -1198,7 +1397,7 @@ function updateChallengeUI(data) {
     else {
 
         claimButton.innerText =
-            "🔒 Complete Challenges";
+            "🔒 Complete All Challenges";
 
         claimButton.disabled =
             true;
@@ -1209,7 +1408,7 @@ function updateChallengeUI(data) {
 
 
 // ========================================
-// CLAIM DAILY CHALLENGE
+// CLAIM DAILY CHALLENGE REWARD
 // ========================================
 
 window.claimDailyChallenge = async function () {
@@ -1252,11 +1451,11 @@ window.claimDailyChallenge = async function () {
             Number(data.dailyRedeem) || 0;
 
 
-        const alreadyClaimed =
-            data.challengeRewardClaimed === true;
+        // ALREADY CLAIMED
 
-
-        if (alreadyClaimed) {
+        if (
+            data.challengeRewardClaimed === true
+        ) {
 
             alert(
                 "You already claimed today's challenge reward!"
@@ -1266,6 +1465,8 @@ window.claimDailyChallenge = async function () {
 
         }
 
+
+        // NOT COMPLETED
 
         if (
             ads < 3 ||
@@ -1282,8 +1483,11 @@ window.claimDailyChallenge = async function () {
         }
 
 
-        const challengeReward = 100;
+        const challengeReward =
+            100;
 
+
+        // GIVE REWARD
 
         await updateDoc(
             userRef,
@@ -1316,6 +1520,7 @@ window.claimDailyChallenge = async function () {
 
         console.error(error);
 
+
         alert(
             "Could not claim reward."
         );
@@ -1331,23 +1536,29 @@ window.claimDailyChallenge = async function () {
 
 async function updateDailyStreak(data) {
 
+    if (!currentUser) return;
+
+
     const today =
         getToday();
 
 
+    // ALREADY LOGGED IN TODAY
+
     if (
-        data.lastLoginDate ===
-        today
+        data.lastLoginDate === today
     ) {
 
         updateStreakUI(
-            data.streak || 0
+            Number(data.streak) || 0
         );
 
         return;
 
     }
 
+
+    // YESTERDAY
 
     const yesterday =
         new Date();
@@ -1364,8 +1575,11 @@ async function updateDailyStreak(data) {
             .split("T")[0];
 
 
-    let newStreak = 1;
+    let newStreak =
+        1;
 
+
+    // CONTINUE STREAK
 
     if (
         data.lastLoginDate ===
@@ -1377,6 +1591,8 @@ async function updateDailyStreak(data) {
 
     }
 
+
+    // STREAK REWARDS
 
     const rewards =
         [
@@ -1422,6 +1638,20 @@ async function updateDailyStreak(data) {
     updateStreakUI(
         newStreak
     );
+
+
+    const streakStatus =
+        document.getElementById(
+            "streakStatus"
+        );
+
+
+    if (streakStatus) {
+
+        streakStatus.innerText =
+            `🔥 Day ${newStreak} completed! +${reward} coins`;
+
+    }
 
 
     alert(
@@ -1481,6 +1711,16 @@ function getFriendlyError(code) {
         case "auth/weak-password":
 
             return "Password is too weak.";
+
+
+        case "auth/user-not-found":
+
+            return "No account found with this email.";
+
+
+        case "auth/wrong-password":
+
+            return "Incorrect password.";
 
 
         default:
