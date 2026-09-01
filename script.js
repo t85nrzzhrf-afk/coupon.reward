@@ -170,11 +170,16 @@ window.signupUser = async function () {
                 adsWatched: 0,
                 totalEarned: 0,
 
-                // DEFAULT SUBSCRIPTION
                 subscription: "Free",
                 subscriptionPrice: 0,
                 multiplier: 1,
                 subscriptionActive: false,
+
+                dailyChallengeProgress: 0,
+                dailyChallengeCompleted: false,
+
+                lastLoginDate: "",
+                streak: 0,
 
                 createdAt: new Date()
             }
@@ -276,19 +281,43 @@ async function loadUserData() {
 
     if (snapshot.exists()) {
 
-        const data =
-            snapshot.data();
+        let data = snapshot.data();
 
+        data =
+            await resetDailyDataIfNeeded(data);
 
-        updateUI(
-            data.coins || 0,
-            data.adsWatched || 0
-        );
+        await updateDailyStreak(data);
+
+        await loadUserDataAfterStreak();
 
     }
 
 }
+async function loadUserDataAfterStreak() {
 
+    const userRef =
+        doc(db, "users", currentUser.uid);
+
+    const snapshot =
+        await getDoc(userRef);
+
+    if (!snapshot.exists()) return;
+
+    const data =
+        snapshot.data();
+
+    updateUI(
+        data.coins || 0,
+        data.adsWatched || 0
+    );
+
+    updateChallengeUI(data);
+
+    updateStreakUI(
+        data.streak || 0
+    );
+
+}
 
 // ========================================
 // UPDATE UI
@@ -413,7 +442,10 @@ async function giveDemoReward() {
 
             adsWatched: increment(1),
 
-            totalEarned: increment(reward)
+            totalEarned: increment(reward),
+
+            dailyAds: increment(1)
+
 
         });
 
@@ -500,7 +532,8 @@ window.redeemReward = async function (requiredCoins) {
 
     await updateDoc(userRef, {
 
-        coins: coins - requiredCoins
+        coins: coins - requiredCoins,
+        dailyRedeem: increment(1)
 
     });
 
@@ -845,7 +878,10 @@ window.spinWheel = async function () {
                             increment(reward),
 
                         lastSpinDate:
-                            today
+                            today,
+                        
+                        dailySpin:
+                            1
 
                     }
                 );
