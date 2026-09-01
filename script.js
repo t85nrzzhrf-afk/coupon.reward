@@ -61,19 +61,6 @@ let timerInterval;
 
 
 // ========================================
-// HELPER
-// ========================================
-
-function getToday() {
-
-    return new Date()
-        .toISOString()
-        .split("T")[0];
-
-}
-
-
-// ========================================
 // AUTH STATE
 // ========================================
 
@@ -83,83 +70,35 @@ onAuthStateChanged(auth, async (user) => {
 
     if (user) {
 
-        const loggedOut =
-            document.getElementById("loggedOutNav");
+        document
+            .getElementById("loggedOutNav")
+            .classList.add("hidden");
 
-        const loggedIn =
-            document.getElementById("loggedInNav");
+        document
+            .getElementById("loggedInNav")
+            .classList.remove("hidden");
 
-        const loginRequired =
-            document.getElementById("loginRequired");
-
-
-        if (loggedOut) {
-
-            loggedOut.classList.add("hidden");
-
-        }
-
-
-        if (loggedIn) {
-
-            loggedIn.classList.remove("hidden");
-
-        }
-
-
-        if (loginRequired) {
-
-            loginRequired.style.display = "none";
-
-        }
-
+        document
+            .getElementById("loginRequired")
+            .style.display = "none";
 
         await loadUserData();
 
-    }
+    } else {
 
-    else {
+        document
+            .getElementById("loggedOutNav")
+            .classList.remove("hidden");
 
-        const loggedOut =
-            document.getElementById("loggedOutNav");
+        document
+            .getElementById("loggedInNav")
+            .classList.add("hidden");
 
-        const loggedIn =
-            document.getElementById("loggedInNav");
+        document
+            .getElementById("loginRequired")
+            .style.display = "block";
 
-        const loginRequired =
-            document.getElementById("loginRequired");
-
-
-        if (loggedOut) {
-
-            loggedOut.classList.remove("hidden");
-
-        }
-
-
-        if (loggedIn) {
-
-            loggedIn.classList.add("hidden");
-
-        }
-
-
-        if (loginRequired) {
-
-            loginRequired.style.display = "block";
-
-        }
-
-
-        updateUI(0, 0, 0);
-
-        updateChallengeUI({
-            dailyAds: 0,
-            dailySpin: 0,
-            dailyRedeem: 0
-        });
-
-        updateStreakUI(0);
+        updateUI(0, 0);
 
     }
 
@@ -173,28 +112,16 @@ onAuthStateChanged(auth, async (user) => {
 window.signupUser = async function () {
 
     const name =
-        document
-        .getElementById("signupName")
-        .value
-        .trim();
-
+        document.getElementById("signupName").value.trim();
 
     const email =
-        document
-        .getElementById("signupEmail")
-        .value
-        .trim();
-
+        document.getElementById("signupEmail").value.trim();
 
     const password =
-        document
-        .getElementById("signupPassword")
-        .value;
-
+        document.getElementById("signupPassword").value;
 
     const error =
-        document
-        .getElementById("signupError");
+        document.getElementById("signupError");
 
 
     if (!name || !email || !password) {
@@ -240,55 +167,33 @@ window.signupUser = async function () {
             {
 
                 name: name,
-
                 email: email,
 
-
-                // WALLET
-
                 coins: 0,
-
                 adsWatched: 0,
-
                 totalEarned: 0,
 
-
-                // SUBSCRIPTION
-
                 subscription: "Free",
-
                 subscriptionPrice: 0,
-
                 multiplier: 1,
-
                 subscriptionActive: false,
 
-
-                // DAILY CHALLENGES
-
+                // DAILY CHALLENGE
+                challengeDate: getToday(),
                 dailyAds: 0,
-
                 dailySpin: 0,
-
                 dailyRedeem: 0,
 
-                challengeDate: getToday(),
-
-
-                // SPIN
-
-                lastSpinDate: "",
-
+                challengeRewardClaimed: false,
 
                 // STREAK
-
                 lastLoginDate: "",
-
                 streak: 0,
 
+                // SPIN
+                lastSpinDate: "",
 
-                createdAt:
-                    new Date()
+                createdAt: new Date()
 
             }
         );
@@ -297,7 +202,6 @@ window.signupUser = async function () {
         alert(
             "Account created successfully!"
         );
-
 
         closeAuth();
 
@@ -320,21 +224,13 @@ window.signupUser = async function () {
 window.loginUser = async function () {
 
     const email =
-        document
-        .getElementById("loginEmail")
-        .value
-        .trim();
-
+        document.getElementById("loginEmail").value.trim();
 
     const password =
-        document
-        .getElementById("loginPassword")
-        .value;
-
+        document.getElementById("loginPassword").value;
 
     const error =
-        document
-        .getElementById("loginError");
+        document.getElementById("loginError");
 
 
     if (!email || !password) {
@@ -354,7 +250,6 @@ window.loginUser = async function () {
             email,
             password
         );
-
 
         closeAuth();
 
@@ -405,46 +300,52 @@ async function loadUserData() {
         snapshot.data();
 
 
-    // RESET DAILY DATA
-
+    // Reset daily challenge
     data =
-        await resetDailyDataIfNeeded(
-            data
-        );
+        await resetDailyDataIfNeeded(data);
 
 
-    // UPDATE STREAK
-
-    await updateDailyStreak(
-        data
-    );
+    // Update streak
+    await updateDailyStreak(data);
 
 
-    // GET UPDATED DATA AGAIN
+    // Reload fresh data
+    await loadUserDataAfterStreak();
 
-    const updatedSnapshot =
+}
+
+
+// ========================================
+// LOAD AFTER STREAK
+// ========================================
+
+async function loadUserDataAfterStreak() {
+
+    if (!currentUser) return;
+
+
+    const userRef =
+        doc(db, "users", currentUser.uid);
+
+
+    const snapshot =
         await getDoc(userRef);
 
 
-    if (!updatedSnapshot.exists()) return;
+    if (!snapshot.exists()) return;
 
 
-    data =
-        updatedSnapshot.data();
+    const data =
+        snapshot.data();
 
-
-    // UPDATE ALL UI
 
     updateUI(
         data.coins || 0,
-        data.adsWatched || 0,
-        data.totalEarned || 0
+        data.adsWatched || 0
     );
 
 
-    updateChallengeUI(
-        data
-    );
+    updateChallengeUI(data);
 
 
     updateStreakUI(
@@ -455,7 +356,654 @@ async function loadUserData() {
 
 
 // ========================================
-// DAILY RESET
+// UPDATE MAIN UI
+// ========================================
+
+function updateUI(coins, ads) {
+
+    const navCoins =
+        document.getElementById("navCoins");
+
+    const heroCoins =
+        document.getElementById("heroCoins");
+
+    const adsWatched =
+        document.getElementById("adsWatched");
+
+    const totalEarned =
+        document.getElementById("totalEarned");
+
+
+    if (navCoins)
+        navCoins.innerText = coins;
+
+
+    if (heroCoins)
+        heroCoins.innerText = coins;
+
+
+    if (adsWatched)
+        adsWatched.innerText = ads;
+
+
+    if (totalEarned)
+        totalEarned.innerText = coins;
+
+}
+
+
+// ========================================
+// WATCH AD
+// ========================================
+
+window.startAd = function () {
+
+    if (!currentUser) {
+
+        openAuth("login");
+
+        return;
+
+    }
+
+
+    const modal =
+        document.getElementById("adModal");
+
+
+    modal.style.display = "flex";
+
+
+    let timeLeft = 10;
+
+
+    document
+        .getElementById("timer")
+        .innerText = timeLeft;
+
+
+    document
+        .getElementById("adStatus")
+        .innerText =
+        "Advertisement is playing...";
+
+
+    clearInterval(timerInterval);
+
+
+    timerInterval =
+        setInterval(async () => {
+
+            timeLeft--;
+
+
+            document
+                .getElementById("timer")
+                .innerText =
+                timeLeft;
+
+
+            if (timeLeft <= 0) {
+
+                clearInterval(timerInterval);
+
+                await giveDemoReward();
+
+            }
+
+        }, 1000);
+
+};
+
+
+// ========================================
+// AD REWARD
+// ========================================
+
+async function giveDemoReward() {
+
+    if (!currentUser) return;
+
+
+    const userRef =
+        doc(db, "users", currentUser.uid);
+
+
+    try {
+
+        const snapshot =
+            await getDoc(userRef);
+
+
+        if (!snapshot.exists()) return;
+
+
+        const data =
+            snapshot.data();
+
+
+        const multiplier =
+            Number(data.multiplier) || 1;
+
+
+        const baseReward = 10;
+
+
+        const reward =
+            baseReward * multiplier;
+
+
+        await updateDoc(
+            userRef,
+            {
+
+                coins:
+                    increment(reward),
+
+                adsWatched:
+                    increment(1),
+
+                totalEarned:
+                    increment(reward),
+
+                dailyAds:
+                    increment(1)
+
+            }
+        );
+
+
+        await loadUserData();
+
+
+        document
+            .getElementById("adStatus")
+            .innerText =
+            `✓ Advertisement completed! +${reward} coins`;
+
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        document
+            .getElementById("adStatus")
+            .innerText =
+            "Something went wrong.";
+
+    }
+
+}
+
+
+// ========================================
+// CLOSE AD
+// ========================================
+
+window.closeAd = function () {
+
+    document
+        .getElementById("adModal")
+        .style.display = "none";
+
+
+    clearInterval(timerInterval);
+
+};
+
+
+// ========================================
+// REDEEM
+// ========================================
+
+window.redeemReward = async function (requiredCoins) {
+
+    if (!currentUser) {
+
+        openAuth("login");
+
+        return;
+
+    }
+
+
+    const userRef =
+        doc(db, "users", currentUser.uid);
+
+
+    const snapshot =
+        await getDoc(userRef);
+
+
+    if (!snapshot.exists()) return;
+
+
+    const data =
+        snapshot.data();
+
+
+    const coins =
+        Number(data.coins) || 0;
+
+
+    if (coins < requiredCoins) {
+
+        alert(
+            `You need ${requiredCoins - coins} more coins.`
+        );
+
+        return;
+
+    }
+
+
+    await updateDoc(
+        userRef,
+        {
+
+            coins:
+                increment(-requiredCoins),
+
+            dailyRedeem:
+                increment(1)
+
+        }
+    );
+
+
+    await loadUserData();
+
+
+    const couponCode =
+        "RX" +
+        requiredCoins +
+        "-DEMO";
+
+
+    document
+        .getElementById("couponTitle")
+        .innerText =
+        `₹${requiredCoins} OFF`;
+
+
+    document
+        .getElementById("couponCode")
+        .innerText =
+        couponCode;
+
+
+    document
+        .getElementById("couponModal")
+        .style.display =
+        "flex";
+
+};
+
+
+// ========================================
+// AUTH UI
+// ========================================
+
+window.openAuth = function (type) {
+
+    document
+        .getElementById("authModal")
+        .style.display =
+        "flex";
+
+
+    if (type === "signup") {
+
+        showSignup();
+
+    } else {
+
+        showLogin();
+
+    }
+
+};
+
+
+window.closeAuth = function () {
+
+    document
+        .getElementById("authModal")
+        .style.display =
+        "none";
+
+};
+
+
+window.showSignup = function () {
+
+    document
+        .getElementById("loginForm")
+        .classList
+        .add("hidden");
+
+
+    document
+        .getElementById("signupForm")
+        .classList
+        .remove("hidden");
+
+};
+
+
+window.showLogin = function () {
+
+    document
+        .getElementById("signupForm")
+        .classList
+        .add("hidden");
+
+
+    document
+        .getElementById("loginForm")
+        .classList
+        .remove("hidden");
+
+};
+
+
+// ========================================
+// ADVERTISER
+// ========================================
+
+window.contactAdvertiser = function () {
+
+    alert(
+        "Advertiser registration coming soon."
+    );
+
+};
+
+
+// ========================================
+// COUPON
+// ========================================
+
+window.closeCoupon = function () {
+
+    document
+        .getElementById("couponModal")
+        .style.display =
+        "none";
+
+};
+
+
+window.copyCoupon = function () {
+
+    const code =
+        document
+            .getElementById("couponCode")
+            .innerText;
+
+
+    navigator.clipboard
+        .writeText(code);
+
+
+    alert(
+        "Coupon code copied!"
+    );
+
+};
+
+
+// ========================================
+// SUBSCRIPTIONS
+// ========================================
+
+window.buySubscription = async function (
+    plan,
+    price,
+    multiplier
+) {
+
+    if (!currentUser) {
+
+        openAuth("login");
+
+        return;
+
+    }
+
+
+    const userRef =
+        doc(db, "users", currentUser.uid);
+
+
+    try {
+
+        const confirmed =
+            confirm(
+                `${plan} Plan\n\n` +
+                `Price: ₹${price}\n` +
+                `Coin Multiplier: ${multiplier}×\n\n` +
+                `Activate this prototype subscription?`
+            );
+
+
+        if (!confirmed) return;
+
+
+        await updateDoc(
+            userRef,
+            {
+
+                subscription:
+                    plan,
+
+                subscriptionPrice:
+                    price,
+
+                multiplier:
+                    multiplier,
+
+                subscriptionActive:
+                    true
+
+            }
+        );
+
+
+        await loadUserData();
+
+
+        alert(
+            `✓ ${plan} subscription activated!\n\n` +
+            `Multiplier: ${multiplier}×`
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        alert(
+            "Could not activate subscription."
+        );
+
+    }
+
+};
+
+
+// ========================================
+// DAILY SPIN
+// ========================================
+
+window.spinWheel = async function () {
+
+    if (!currentUser) {
+
+        openAuth("login");
+
+        return;
+
+    }
+
+
+    const userRef =
+        doc(db, "users", currentUser.uid);
+
+
+    try {
+
+        const snapshot =
+            await getDoc(userRef);
+
+
+        if (!snapshot.exists()) return;
+
+
+        const data =
+            snapshot.data();
+
+
+        const today =
+            getToday();
+
+
+        if (data.lastSpinDate === today) {
+
+            document
+                .getElementById("spinStatus")
+                .innerText =
+                "You already used your daily spin! Come back tomorrow 🎡";
+
+            return;
+
+        }
+
+
+        const button =
+            document
+                .getElementById("spinButton");
+
+
+        button.disabled = true;
+
+
+        document
+            .getElementById("spinStatus")
+            .innerText =
+            "Spinning... 🎡";
+
+
+        const rewards =
+            [5, 10, 20, 50];
+
+
+        const reward =
+            rewards[
+                Math.floor(
+                    Math.random() *
+                    rewards.length
+                )
+            ];
+
+
+        const rotation =
+            1800 +
+            Math.floor(
+                Math.random() * 1440
+            );
+
+
+        const wheel =
+            document
+                .getElementById("spinWheel");
+
+
+        wheel.style.transform =
+            `rotate(${rotation}deg)`;
+
+
+        setTimeout(
+            async () => {
+
+                await updateDoc(
+                    userRef,
+                    {
+
+                        coins:
+                            increment(reward),
+
+                        totalEarned:
+                            increment(reward),
+
+                        lastSpinDate:
+                            today,
+
+                        dailySpin:
+                            1
+
+                    }
+                );
+
+
+                await loadUserData();
+
+
+                document
+                    .getElementById("spinStatus")
+                    .innerText =
+                    `🎉 You won ${reward} coins!`;
+
+
+                button.disabled = false;
+
+            },
+            5000
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        document
+            .getElementById("spinStatus")
+            .innerText =
+            "Something went wrong.";
+
+
+        document
+            .getElementById("spinButton")
+            .disabled =
+            false;
+
+    }
+
+};
+
+
+// ========================================
+// DATE
+// ========================================
+
+function getToday() {
+
+    return new Date()
+        .toISOString()
+        .split("T")[0];
+
+}
+
+
+// ========================================
+// RESET DAILY DATA
 // ========================================
 
 async function resetDailyDataIfNeeded(data) {
@@ -464,16 +1012,10 @@ async function resetDailyDataIfNeeded(data) {
         getToday();
 
 
-    if (
-        data.challengeDate !== today
-    ) {
+    if (data.challengeDate !== today) {
 
         await updateDoc(
-            doc(
-                db,
-                "users",
-                currentUser.uid
-            ),
+            doc(db, "users", currentUser.uid),
             {
 
                 challengeDate:
@@ -486,7 +1028,10 @@ async function resetDailyDataIfNeeded(data) {
                     0,
 
                 dailyRedeem:
-                    0
+                    0,
+
+                challengeRewardClaimed:
+                    false
 
             }
         );
@@ -506,7 +1051,10 @@ async function resetDailyDataIfNeeded(data) {
                 0,
 
             dailyRedeem:
-                0
+                0,
+
+            challengeRewardClaimed:
+                false
 
         };
 
@@ -514,74 +1062,6 @@ async function resetDailyDataIfNeeded(data) {
 
 
     return data;
-
-}
-
-
-// ========================================
-// UPDATE MAIN UI
-// ========================================
-
-function updateUI(
-    coins,
-    ads,
-    totalEarned = 0
-) {
-
-    const navCoins =
-        document.getElementById(
-            "navCoins"
-        );
-
-
-    const heroCoins =
-        document.getElementById(
-            "heroCoins"
-        );
-
-
-    const adsWatched =
-        document.getElementById(
-            "adsWatched"
-        );
-
-
-    const totalEarnedElement =
-        document.getElementById(
-            "totalEarned"
-        );
-
-
-    if (navCoins) {
-
-        navCoins.innerText =
-            coins;
-
-    }
-
-
-    if (heroCoins) {
-
-        heroCoins.innerText =
-            coins;
-
-    }
-
-
-    if (adsWatched) {
-
-        adsWatched.innerText =
-            ads;
-
-    }
-
-
-    if (totalEarnedElement) {
-
-        totalEarnedElement.innerText =
-            totalEarned;
-
-    }
 
 }
 
@@ -631,6 +1111,21 @@ function updateChallengeUI(data) {
         );
 
 
+    if (adProgress)
+        adProgress.innerText =
+            `${ads} / 3`;
+
+
+    if (spinProgress)
+        spinProgress.innerText =
+            `${spin} / 1`;
+
+
+    if (redeemProgress)
+        redeemProgress.innerText =
+            `${redeem} / 1`;
+
+
     const adBar =
         document.getElementById(
             "adChallengeBar"
@@ -649,54 +1144,185 @@ function updateChallengeUI(data) {
         );
 
 
-    if (adProgress) {
-
-        adProgress.innerText =
-            `${ads} / 3`;
-
-    }
-
-
-    if (spinProgress) {
-
-        spinProgress.innerText =
-            `${spin} / 1`;
-
-    }
-
-
-    if (redeemProgress) {
-
-        redeemProgress.innerText =
-            `${redeem} / 1`;
-
-    }
-
-
-    if (adBar) {
-
+    if (adBar)
         adBar.style.width =
             `${(ads / 3) * 100}%`;
 
-    }
 
-
-    if (spinBar) {
-
+    if (spinBar)
         spinBar.style.width =
             `${spin * 100}%`;
 
-    }
 
-
-    if (redeemBar) {
-
+    if (redeemBar)
         redeemBar.style.width =
             `${redeem * 100}%`;
+
+
+    // Update CLAIM button
+    const claimButton =
+        document.getElementById(
+            "claimChallengeButton"
+        );
+
+
+    if (!claimButton) return;
+
+
+    const completed =
+        ads >= 3 &&
+        spin >= 1 &&
+        redeem >= 1;
+
+
+    if (data.challengeRewardClaimed) {
+
+        claimButton.innerText =
+            "✓ Reward Claimed";
+
+        claimButton.disabled =
+            true;
+
+    }
+
+    else if (completed) {
+
+        claimButton.innerText =
+            "🎁 Claim 100 Coins";
+
+        claimButton.disabled =
+            false;
+
+    }
+
+    else {
+
+        claimButton.innerText =
+            "🔒 Complete Challenges";
+
+        claimButton.disabled =
+            true;
 
     }
 
 }
+
+
+// ========================================
+// CLAIM DAILY CHALLENGE
+// ========================================
+
+window.claimDailyChallenge = async function () {
+
+    if (!currentUser) {
+
+        openAuth("login");
+
+        return;
+
+    }
+
+
+    const userRef =
+        doc(db, "users", currentUser.uid);
+
+
+    try {
+
+        const snapshot =
+            await getDoc(userRef);
+
+
+        if (!snapshot.exists()) return;
+
+
+        const data =
+            snapshot.data();
+
+
+        const ads =
+            Number(data.dailyAds) || 0;
+
+
+        const spin =
+            Number(data.dailySpin) || 0;
+
+
+        const redeem =
+            Number(data.dailyRedeem) || 0;
+
+
+        const alreadyClaimed =
+            data.challengeRewardClaimed === true;
+
+
+        if (alreadyClaimed) {
+
+            alert(
+                "You already claimed today's challenge reward!"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            ads < 3 ||
+            spin < 1 ||
+            redeem < 1
+        ) {
+
+            alert(
+                "Complete all 3 daily challenges first!"
+            );
+
+            return;
+
+        }
+
+
+        const challengeReward = 100;
+
+
+        await updateDoc(
+            userRef,
+            {
+
+                coins:
+                    increment(challengeReward),
+
+                totalEarned:
+                    increment(challengeReward),
+
+                challengeRewardClaimed:
+                    true
+
+            }
+        );
+
+
+        await loadUserData();
+
+
+        alert(
+            `🎉 Daily Challenge Complete!\n\n` +
+            `+${challengeReward} Coins`
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Could not claim reward."
+        );
+
+    }
+
+};
 
 
 // ========================================
@@ -710,8 +1336,13 @@ async function updateDailyStreak(data) {
 
 
     if (
-        data.lastLoginDate === today
+        data.lastLoginDate ===
+        today
     ) {
+
+        updateStreakUI(
+            data.streak || 0
+        );
 
         return;
 
@@ -729,12 +1360,11 @@ async function updateDailyStreak(data) {
 
     const yesterdayString =
         yesterday
-        .toISOString()
-        .split("T")[0];
+            .toISOString()
+            .split("T")[0];
 
 
-    let newStreak =
-        1;
+    let newStreak = 1;
 
 
     if (
@@ -770,11 +1400,7 @@ async function updateDailyStreak(data) {
 
 
     await updateDoc(
-        doc(
-            db,
-            "users",
-            currentUser.uid
-        ),
+        doc(db, "users", currentUser.uid),
         {
 
             streak:
@@ -793,6 +1419,11 @@ async function updateDailyStreak(data) {
     );
 
 
+    updateStreakUI(
+        newStreak
+    );
+
+
     alert(
         `🔥 Daily Streak Reward!\n\n` +
         `Day ${newStreak}\n` +
@@ -803,20 +1434,20 @@ async function updateDailyStreak(data) {
 
 
 // ========================================
-// UPDATE STREAK UI
+// STREAK UI
 // ========================================
 
 function updateStreakUI(streak) {
 
-    const streakElement =
+    const element =
         document.getElementById(
             "streakCount"
         );
 
 
-    if (streakElement) {
+    if (element) {
 
-        streakElement.innerText =
+        element.innerText =
             streak;
 
     }
@@ -825,927 +1456,12 @@ function updateStreakUI(streak) {
 
 
 // ========================================
-// WATCH AD
-// ========================================
-
-window.startAd = function () {
-
-    if (!currentUser) {
-
-        openAuth("login");
-
-        return;
-
-    }
-
-
-    const modal =
-        document.getElementById(
-            "adModal"
-        );
-
-
-    if (modal) {
-
-        modal.style.display =
-            "flex";
-
-    }
-
-
-    let timeLeft =
-        10;
-
-
-    const timer =
-        document.getElementById(
-            "timer"
-        );
-
-
-    if (timer) {
-
-        timer.innerText =
-            timeLeft;
-
-    }
-
-
-    const adStatus =
-        document.getElementById(
-            "adStatus"
-        );
-
-
-    if (adStatus) {
-
-        adStatus.innerText =
-            "Advertisement is playing...";
-
-    }
-
-
-    clearInterval(
-        timerInterval
-    );
-
-
-    timerInterval =
-        setInterval(
-            async () => {
-
-                timeLeft--;
-
-
-                if (timer) {
-
-                    timer.innerText =
-                        timeLeft;
-
-                }
-
-
-                if (
-                    timeLeft <= 0
-                ) {
-
-                    clearInterval(
-                        timerInterval
-                    );
-
-
-                    await giveDemoReward();
-
-                }
-
-            },
-            1000
-        );
-
-};
-
-
-// ========================================
-// GIVE AD REWARD
-// ========================================
-
-async function giveDemoReward() {
-
-    if (!currentUser) return;
-
-
-    const userRef =
-        doc(
-            db,
-            "users",
-            currentUser.uid
-        );
-
-
-    try {
-
-        const snapshot =
-            await getDoc(
-                userRef
-            );
-
-
-        if (
-            !snapshot.exists()
-        ) return;
-
-
-        const data =
-            snapshot.data();
-
-
-        const multiplier =
-            Number(
-                data.multiplier
-            ) || 1;
-
-
-        const baseReward =
-            10;
-
-
-        const reward =
-            baseReward *
-            multiplier;
-
-
-        await updateDoc(
-            userRef,
-            {
-
-                coins:
-                    increment(
-                        reward
-                    ),
-
-                adsWatched:
-                    increment(
-                        1
-                    ),
-
-                totalEarned:
-                    increment(
-                        reward
-                    ),
-
-                dailyAds:
-                    increment(
-                        1
-                    )
-
-            }
-        );
-
-
-        await loadUserData();
-
-
-        const status =
-            document.getElementById(
-                "adStatus"
-            );
-
-
-        if (status) {
-
-            status.innerText =
-                `✓ Advertisement completed! +${reward} coins`;
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        const status =
-            document.getElementById(
-                "adStatus"
-            );
-
-
-        if (status) {
-
-            status.innerText =
-                "Something went wrong.";
-
-        }
-
-    }
-
-}
-
-
-// ========================================
-// CLOSE AD
-// ========================================
-
-window.closeAd = function () {
-
-    const modal =
-        document.getElementById(
-            "adModal"
-        );
-
-
-    if (modal) {
-
-        modal.style.display =
-            "none";
-
-    }
-
-
-    clearInterval(
-        timerInterval
-    );
-
-};
-
-
-// ========================================
-// REDEEM REWARD
-// ========================================
-
-window.redeemReward =
-async function (
-    requiredCoins
-) {
-
-    if (!currentUser) {
-
-        openAuth("login");
-
-        return;
-
-    }
-
-
-    const userRef =
-        doc(
-            db,
-            "users",
-            currentUser.uid
-        );
-
-
-    const snapshot =
-        await getDoc(
-            userRef
-        );
-
-
-    if (
-        !snapshot.exists()
-    ) return;
-
-
-    const data =
-        snapshot.data();
-
-
-    const coins =
-        Number(
-            data.coins
-        ) || 0;
-
-
-    if (
-        coins < requiredCoins
-    ) {
-
-        alert(
-            `You need ${
-                requiredCoins - coins
-            } more coins.`
-        );
-
-        return;
-
-    }
-
-
-    await updateDoc(
-        userRef,
-        {
-
-            coins:
-                coins -
-                requiredCoins,
-
-            dailyRedeem:
-                increment(
-                    1
-                )
-
-        }
-    );
-
-
-    await loadUserData();
-
-
-    const couponCode =
-        "RX" +
-        requiredCoins +
-        "-DEMO";
-
-
-    const couponTitle =
-        document.getElementById(
-            "couponTitle"
-        );
-
-
-    const couponCodeElement =
-        document.getElementById(
-            "couponCode"
-        );
-
-
-    const couponModal =
-        document.getElementById(
-            "couponModal"
-        );
-
-
-    if (couponTitle) {
-
-        couponTitle.innerText =
-            `₹${requiredCoins} OFF`;
-
-    }
-
-
-    if (couponCodeElement) {
-
-        couponCodeElement.innerText =
-            couponCode;
-
-    }
-
-
-    if (couponModal) {
-
-        couponModal.style.display =
-            "flex";
-
-    }
-
-};
-
-
-// ========================================
-// DAILY SPIN WHEEL
-// ========================================
-
-window.spinWheel =
-async function () {
-
-    if (!currentUser) {
-
-        openAuth(
-            "login"
-        );
-
-        return;
-
-    }
-
-
-    const userRef =
-        doc(
-            db,
-            "users",
-            currentUser.uid
-        );
-
-
-    try {
-
-        const snapshot =
-            await getDoc(
-                userRef
-            );
-
-
-        if (
-            !snapshot.exists()
-        ) return;
-
-
-        const data =
-            snapshot.data();
-
-
-        const today =
-            getToday();
-
-
-        const status =
-            document.getElementById(
-                "spinStatus"
-            );
-
-
-        if (
-            data.lastSpinDate ===
-            today
-        ) {
-
-            if (status) {
-
-                status.innerText =
-                    "You already used your daily spin! Come back tomorrow 🎡";
-
-            }
-
-            return;
-
-        }
-
-
-        const button =
-            document.getElementById(
-                "spinButton"
-            );
-
-
-        if (button) {
-
-            button.disabled =
-                true;
-
-        }
-
-
-        if (status) {
-
-            status.innerText =
-                "Spinning... 🎡";
-
-        }
-
-
-        const rewards =
-            [
-                5,
-                10,
-                20,
-                50
-            ];
-
-
-        const reward =
-            rewards[
-                Math.floor(
-                    Math.random() *
-                    rewards.length
-                )
-            ];
-
-
-        const rotation =
-            1800 +
-            Math.floor(
-                Math.random() *
-                1440
-            );
-
-
-        const wheel =
-            document.getElementById(
-                "spinWheel"
-            );
-
-
-        if (wheel) {
-
-            wheel.style.transform =
-                `rotate(${rotation}deg)`;
-
-        }
-
-
-        setTimeout(
-            async function () {
-
-                try {
-
-                    await updateDoc(
-                        userRef,
-                        {
-
-                            coins:
-                                increment(
-                                    reward
-                                ),
-
-                            totalEarned:
-                                increment(
-                                    reward
-                                ),
-
-                            lastSpinDate:
-                                today,
-
-                            dailySpin:
-                                1
-
-                        }
-                    );
-
-
-                    await loadUserData();
-
-
-                    if (status) {
-
-                        status.innerText =
-                            `🎉 Congratulations! You won ${reward} coins!`;
-
-                    }
-
-                }
-
-                catch (error) {
-
-                    console.error(
-                        error
-                    );
-
-
-                    if (status) {
-
-                        status.innerText =
-                            "Something went wrong.";
-
-                    }
-
-                }
-
-                finally {
-
-                    if (button) {
-
-                        button.disabled =
-                            false;
-
-                    }
-
-                }
-
-            },
-            5000
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        const status =
-            document.getElementById(
-                "spinStatus"
-            );
-
-
-        if (status) {
-
-            status.innerText =
-                "Something went wrong. Please try again.";
-
-        }
-
-
-        const button =
-            document.getElementById(
-                "spinButton"
-            );
-
-
-        if (button) {
-
-            button.disabled =
-                false;
-
-        }
-
-    }
-
-};
-
-
-// ========================================
-// AUTH UI
-// ========================================
-
-window.openAuth =
-function (type) {
-
-    const modal =
-        document.getElementById(
-            "authModal"
-        );
-
-
-    if (modal) {
-
-        modal.style.display =
-            "flex";
-
-    }
-
-
-    if (
-        type === "signup"
-    ) {
-
-        showSignup();
-
-    }
-
-    else {
-
-        showLogin();
-
-    }
-
-};
-
-
-window.closeAuth =
-function () {
-
-    const modal =
-        document.getElementById(
-            "authModal"
-        );
-
-
-    if (modal) {
-
-        modal.style.display =
-            "none";
-
-    }
-
-};
-
-
-window.showSignup =
-function () {
-
-    const login =
-        document.getElementById(
-            "loginForm"
-        );
-
-
-    const signup =
-        document.getElementById(
-            "signupForm"
-        );
-
-
-    if (login) {
-
-        login.classList.add(
-            "hidden"
-        );
-
-    }
-
-
-    if (signup) {
-
-        signup.classList.remove(
-            "hidden"
-        );
-
-    }
-
-};
-
-
-window.showLogin =
-function () {
-
-    const signup =
-        document.getElementById(
-            "signupForm"
-        );
-
-
-    const login =
-        document.getElementById(
-            "loginForm"
-        );
-
-
-    if (signup) {
-
-        signup.classList.add(
-            "hidden"
-        );
-
-    }
-
-
-    if (login) {
-
-        login.classList.remove(
-            "hidden"
-        );
-
-    }
-
-};
-
-
-// ========================================
-// COUPON UI
-// ========================================
-
-window.closeCoupon =
-function () {
-
-    const modal =
-        document.getElementById(
-            "couponModal"
-        );
-
-
-    if (modal) {
-
-        modal.style.display =
-            "none";
-
-    }
-
-};
-
-
-window.copyCoupon =
-function () {
-
-    const codeElement =
-        document.getElementById(
-            "couponCode"
-        );
-
-
-    if (!codeElement) return;
-
-
-    const code =
-        codeElement.innerText;
-
-
-    navigator.clipboard
-        .writeText(
-            code
-        );
-
-
-    alert(
-        "Coupon code copied!"
-    );
-
-};
-
-
-// ========================================
-// ADVERTISER
-// ========================================
-
-window.contactAdvertiser =
-function () {
-
-    alert(
-        "Advertiser registration coming soon."
-    );
-
-};
-
-
-// ========================================
-// SUBSCRIPTIONS
-// ========================================
-// PROTOTYPE MODE
-
-window.buySubscription =
-async function (
-    plan,
-    price,
-    multiplier
-) {
-
-    if (!currentUser) {
-
-        openAuth(
-            "login"
-        );
-
-        return;
-
-    }
-
-
-    const userRef =
-        doc(
-            db,
-            "users",
-            currentUser.uid
-        );
-
-
-    try {
-
-        const confirmed =
-            confirm(
-                `${plan} Plan\n\n` +
-                `Price: ₹${price}\n` +
-                `Coin Multiplier: ${multiplier}×\n\n` +
-                `Activate this prototype subscription?`
-            );
-
-
-        if (
-            !confirmed
-        ) return;
-
-
-        await updateDoc(
-            userRef,
-            {
-
-                subscription:
-                    plan,
-
-                subscriptionPrice:
-                    price,
-
-                multiplier:
-                    multiplier,
-
-                subscriptionActive:
-                    true
-
-            }
-        );
-
-
-        await loadUserData();
-
-
-        alert(
-            `✓ ${plan} subscription activated!\n\n` +
-            `Multiplier: ${multiplier}×`
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        alert(
-            "Could not activate subscription."
-        );
-
-    }
-
-};
-
-
-// ========================================
 // FRIENDLY ERRORS
 // ========================================
 
-function getFriendlyError(
-    code
-) {
+function getFriendlyError(code) {
 
-    switch (
-        code
-    ) {
+    switch (code) {
 
         case "auth/email-already-in-use":
 
