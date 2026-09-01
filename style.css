@@ -987,3 +987,115 @@ footer p {
     }
 
 }
+/* ========================================
+   DAILY CHALLENGES
+======================================== */
+
+.daily-challenges {
+    padding: 80px 8%;
+    background: #f7f5ff;
+    text-align: center;
+}
+
+.challenge-container {
+    max-width: 850px;
+    margin: 40px auto 0;
+    display: grid;
+    gap: 20px;
+}
+
+.challenge-card {
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    text-align: left;
+}
+
+.challenge-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 17px;
+    margin-bottom: 15px;
+}
+
+.progress-bar {
+    height: 12px;
+    background: #eceaf5;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: #6547f5;
+    border-radius: 20px;
+    transition: 0.4s;
+}
+
+.challenge-reward {
+    margin-top: 12px;
+    color: #6547f5;
+    font-weight: bold;
+}
+
+
+/* ========================================
+   DAILY STREAK
+======================================== */
+
+.streak-section {
+    padding: 80px 8%;
+    text-align: center;
+    background: white;
+}
+
+.streak-card {
+    max-width: 950px;
+    margin: 40px auto 0;
+    padding: 35px;
+    border-radius: 22px;
+    background: #f7f5ff;
+}
+
+.streak-number {
+    font-size: 40px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+.streak-number small {
+    display: block;
+    font-size: 16px;
+    color: #666;
+}
+
+.streak-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+}
+
+.streak-days div {
+    background: white;
+    padding: 18px 8px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+}
+
+#streakStatus {
+    margin-top: 25px;
+    font-weight: bold;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    .streak-days {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}

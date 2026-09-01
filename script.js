@@ -889,3 +889,191 @@ window.spinWheel = async function () {
     }
 
 };
+// ========================================
+// DAILY DATE HELPER
+// ========================================
+
+function getToday() {
+
+    return new Date()
+        .toISOString()
+        .split("T")[0];
+
+}
+
+
+// ========================================
+// DAILY DATA RESET
+// ========================================
+
+async function resetDailyDataIfNeeded(data) {
+
+    const today = getToday();
+
+    if (data.challengeDate !== today) {
+
+        await updateDoc(
+            doc(db, "users", currentUser.uid),
+            {
+                challengeDate: today,
+                dailyAds: 0,
+                dailySpin: 0,
+                dailyRedeem: 0
+            }
+        );
+
+        return {
+            ...data,
+            challengeDate: today,
+            dailyAds: 0,
+            dailySpin: 0,
+            dailyRedeem: 0
+        };
+
+    }
+
+    return data;
+
+}
+
+
+// ========================================
+// UPDATE CHALLENGE UI
+// ========================================
+
+function updateChallengeUI(data) {
+
+    const ads =
+        Math.min(Number(data.dailyAds) || 0, 3);
+
+    const spin =
+        Math.min(Number(data.dailySpin) || 0, 1);
+
+    const redeem =
+        Math.min(Number(data.dailyRedeem) || 0, 1);
+
+
+    document
+        .getElementById("adChallengeProgress")
+        .innerText =
+        `${ads} / 3`;
+
+    document
+        .getElementById("spinChallengeProgress")
+        .innerText =
+        `${spin} / 1`;
+
+    document
+        .getElementById("redeemChallengeProgress")
+        .innerText =
+        `${redeem} / 1`;
+
+
+    document
+        .getElementById("adChallengeBar")
+        .style.width =
+        `${(ads / 3) * 100}%`;
+
+    document
+        .getElementById("spinChallengeBar")
+        .style.width =
+        `${spin * 100}%`;
+
+    document
+        .getElementById("redeemChallengeBar")
+        .style.width =
+        `${redeem * 100}%`;
+
+}
+
+
+// ========================================
+// DAILY STREAK
+// ========================================
+
+async function updateDailyStreak(data) {
+
+    const today = getToday();
+
+    if (data.lastLoginDate === today) {
+
+        updateStreakUI(data.streak || 0);
+
+        return;
+
+    }
+
+
+    const yesterday =
+        new Date();
+
+    yesterday.setDate(
+        yesterday.getDate() - 1
+    );
+
+    const yesterdayString =
+        yesterday
+        .toISOString()
+        .split("T")[0];
+
+
+    let newStreak = 1;
+
+    if (
+        data.lastLoginDate ===
+        yesterdayString
+    ) {
+
+        newStreak =
+            (Number(data.streak) || 0) + 1;
+
+    }
+
+
+    const rewards =
+        [5, 10, 15, 20, 25, 30, 50];
+
+    const reward =
+        rewards[
+            Math.min(
+                newStreak - 1,
+                rewards.length - 1
+            )
+        ];
+
+
+    await updateDoc(
+        doc(db, "users", currentUser.uid),
+        {
+            streak: newStreak,
+            lastLoginDate: today,
+            coins: increment(reward),
+            totalEarned: increment(reward)
+        }
+    );
+
+
+    updateStreakUI(newStreak);
+
+
+    alert(
+        `🔥 Daily streak reward!\n\n` +
+        `Day ${newStreak}\n` +
+        `+${reward} coins`
+    );
+
+}
+
+
+// ========================================
+// UPDATE STREAK UI
+// ========================================
+
+function updateStreakUI(streak) {
+
+    document
+        .getElementById("streakCount")
+        .innerText =
+        streak;
+
+}
