@@ -378,6 +378,8 @@
     </div>
 
     </section>
+    
+
     <!-- DAILY CHALLENGES -->
 
 <section class="daily-challenges" id="challenges">
@@ -385,10 +387,12 @@
     <h2>Daily Challenges 🎯</h2>
 
     <p class="section-subtitle">
-        Complete today's challenges and earn bonus coins!
+        Complete today's challenges and claim bonus coins!
     </p>
 
     <div class="challenge-container">
+
+        <!-- WATCH ADS -->
 
         <div class="challenge-card">
 
@@ -408,8 +412,20 @@
                 Reward: 🪙 20 Coins
             </p>
 
+            <button
+                id="adChallengeClaim"
+                class="challenge-claim-btn"
+                onclick="claimDailyChallenge('ads')"
+                disabled>
+
+                🔒 Complete Challenge
+
+            </button>
+
         </div>
 
+
+        <!-- DAILY SPIN -->
 
         <div class="challenge-card">
 
@@ -429,8 +445,20 @@
                 Reward: 🪙 10 Coins
             </p>
 
+            <button
+                id="spinChallengeClaim"
+                class="challenge-claim-btn"
+                onclick="claimDailyChallenge('spin')"
+                disabled>
+
+                🔒 Complete Challenge
+
+            </button>
+
         </div>
 
+
+        <!-- REDEEM -->
 
         <div class="challenge-card">
 
@@ -449,6 +477,16 @@
             <p class="challenge-reward">
                 Reward: 🪙 25 Coins
             </p>
+
+            <button
+                id="redeemChallengeClaim"
+                class="challenge-claim-btn"
+                onclick="claimDailyChallenge('redeem')"
+                disabled>
+
+                🔒 Complete Challenge
+
+            </button>
 
         </div>
 
