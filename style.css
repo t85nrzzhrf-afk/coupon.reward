@@ -1099,3 +1099,55 @@ footer p {
     }
 
 }
+/* ============================= */
+/* DAILY CHALLENGE FINAL BUTTON */
+/* ============================= */
+
+.daily-challenge-final {
+    text-align: center;
+    margin-top: 30px;
+    padding: 25px;
+}
+
+.daily-challenge-final p {
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.challenge-claim-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 14px 30px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(135deg, #6c47ff, #8b5cf6);
+    color: white;
+    box-shadow: 0 8px 20px rgba(108, 71, 255, 0.25);
+    transition: all 0.2s ease;
+}
+
+.challenge-claim-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(108, 71, 255, 0.35);
+}
+
+.challenge-claim-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* LOCKED STATE */
+
+.challenge-claim-btn:disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* CLAIMABLE STATE */
+
+.challenge-claim-btn:not(:disabled) {
+    background: linear-gradient(135deg, #6c47ff, #8b5cf6);
+    color: white;
+}
